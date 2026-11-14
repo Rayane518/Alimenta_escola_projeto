@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from app.services.history_service import HistoryService
 
 history_bp = Blueprint("history", __name__)
@@ -22,8 +22,13 @@ def history():
     except ValueError as error:
         return jsonify({"erro": str(error)}), 400
     except Exception:
-        return jsonify({"erro": "Não foi possível consultar o histórico."}), 500
-
+        current_app.logger.exception(
+            "Erro inesperado ao consultar o histórico."
+        )
+        return jsonify({
+            "erro": "Não foi possível consultar o histórico."
+        }), 500
+    
 @history_bp.get("/indicadores")
 def indicators():
     try:
@@ -31,4 +36,9 @@ def indicators():
     except ValueError as error:
         return jsonify({"erro": str(error)}), 400
     except Exception:
-        return jsonify({"erro": "Não foi possível calcular os indicadores."}), 500
+        current_app.logger.exception(
+            "Erro inesperado ao calcular os indicadores."
+        )
+        return jsonify({
+            "erro": "Não foi possível calcular os indicadores."
+        }), 500
