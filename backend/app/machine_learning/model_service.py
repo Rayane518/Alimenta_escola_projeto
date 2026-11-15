@@ -299,20 +299,45 @@ class MealDemandModel:
     def predict(self, history, target_date, shift, students, menu):
         df = self._prepare(history)
         if df.empty:
-            raise BusinessError("Não há registros históricos válidos para previsão.")
+            raise BusinessError(
+                "Não há registros históricos válidos para previsão."
+            )
+
+        # Verificar se o modelo foi treinado
         if not self.model_path.exists():
-            # Verificar se o modelo de refeições foi treinado
-         if not self.model_path.exists():
             raise BusinessError(
                 "O modelo de refeições ainda não foi treinado. "
                 "Execute o treinamento antes de solicitar previsões."
             )
+
+        # Carregar o modelo treinado
         model = joblib.load(self.model_path)
+
+        # Identificar o dia da semana
         day = pd.Timestamp(target_date).dayofweek
-        row = pd.DataFrame([{"alunos_presentes": students, "dia_semana": day, "turno": shift, "cardapio": menu or "não informado"}])
-         # Limitar a demanda prevista ao número de alunos
+
+        # Preparar os dados para previsão
+        row = pd.DataFrame([{
+            "alunos_presentes": students,
+            "dia_semana": day,
+            "turno": shift,
+            "cardapio": menu or "não informado"
+        }])
+
+        # Gerar previsão e limitar ao número de alunos
         estimate = max(
             0,
-            min(students, int(round(float(model.predict(row)[0]))))
+            min(
+                students,
+                int(round(float(model.predict(row)[0])))
+            )
         )
-        return {"refeicoes_estimadas": estimate, "modelo": "RandomForestRegressor", "observacao": "Estimativa de apoio ao planejamento; deve ser validada pela equipe escolar."}
+
+        return {
+            "refeicoes_estimadas": estimate,
+            "modelo": "RandomForestRegressor",
+            "observacao": (
+                "Estimativa de apoio ao planejamento; "
+                "deve ser validada pela equipe escolar."
+            )
+        }
