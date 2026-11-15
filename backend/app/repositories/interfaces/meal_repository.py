@@ -1,6 +1,9 @@
+
 from abc import ABC, abstractmethod
 
+
 class MealRepository(ABC):
+
     @abstractmethod
     def fetch_training_history(self, school_id=None):
         raise NotImplementedError
@@ -15,4 +18,8 @@ class MealRepository(ABC):
 
     @abstractmethod
     def save_prediction(self, prediction):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_predictions_history(self, school_id):
         raise NotImplementedError

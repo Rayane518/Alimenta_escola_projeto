@@ -90,3 +90,44 @@ class MySQLMealRepository(MealRepository):
         finally:
             cursor.close()
             connection.close()
+            
+    def get_predictions_history(self, school_id):
+        """Consulta as previsões salvas de uma escola."""
+
+        sql = """
+            SELECT
+                id_escola,
+                data_prevista,
+                turno,
+                alunos_referencia,
+                quantidade_prevista,
+                tipo_previsao,
+                modelo_utilizado
+            FROM previsoes
+            WHERE id_escola = %s
+            ORDER BY data_prevista DESC, turno
+        """
+
+        connection = get_connection()
+        cursor = None
+
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(sql, (school_id,))
+
+            rows = cursor.fetchall()
+
+            for row in rows:
+                if row.get("data_prevista"):
+                    row["data_prevista"] = (
+                        row["data_prevista"].isoformat()
+                    )
+
+            return rows
+
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+            connection.close()
+
