@@ -2,24 +2,16 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-
-# =====================================
 # LOCALIZAÇÃO DA PASTA BACKEND
-# =====================================
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
-
-# =====================================
 # CARREGAMENTO DAS VARIÁVEIS .ENV
-# =====================================
+
 
 load_dotenv(BACKEND_ROOT / ".env")
 
-
-# =====================================
 # VALIDAÇÃO DA CHAVE DE SEGURANÇA
-# =====================================
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -32,10 +24,7 @@ if not SECRET_KEY or len(SECRET_KEY) < 32:
 
 def load_config():
     return {
-
-        # =====================================
         # BANCO DE DADOS MYSQL
-        # =====================================
 
         "DB_HOST": os.getenv(
             "DB_HOST",
@@ -61,9 +50,7 @@ def load_config():
             "alimenta_escola"
         ),
 
-        # =====================================
         # CONFIGURAÇÕES DO FLASK
-        # =====================================
 
         "FLASK_HOST": os.getenv(
             "FLASK_HOST",
@@ -79,18 +66,14 @@ def load_config():
             "true"
         ).lower() == "true",
 
-        # =====================================
         # COMUNICAÇÃO COM REACT
-        # =====================================
 
         "CORS_ORIGINS": os.getenv(
             "CORS_ORIGINS",
             "http://localhost:5173"
         ),
 
-        # =====================================
         # MACHINE LEARNING
-        # =====================================
 
         "MODEL_PATH": str((
             BACKEND_ROOT / os.getenv(
@@ -99,9 +82,7 @@ def load_config():
             )
         ).resolve()),
 
-        # =====================================
         # AUTENTICAÇÃO E SESSÃO
-        # =====================================
 
         "SECRET_KEY": SECRET_KEY,
 

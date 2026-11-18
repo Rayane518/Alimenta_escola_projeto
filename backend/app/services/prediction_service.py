@@ -78,7 +78,9 @@ class PredictionService:
             "alunos_referencia": students,
             "quantidade_prevista": meals_estimated,
             "tipo_previsao": request.prediction_type,
-            "modelo_utilizado": result["modelo"]
+            "modelo_utilizado": result["modelo"],
+            "margem_seguranca": safety_margin,
+            "refeicoes_recomendadas": meals_recommended
         }
 
         # Salvar previsão
