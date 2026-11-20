@@ -14,7 +14,6 @@ class MySQLMealRepository(MealRepository):
                        SUM(p.alunos_presentes) AS alunos_presentes
                 FROM presencas p
                 INNER JOIN turmas t ON t.id_turma = p.id_turma
-                WHERE t.ativa = TRUE
                 GROUP BY t.id_escola, p.data, t.turno
             )
             SELECT pt.id_escola, pt.data, pt.turno,
