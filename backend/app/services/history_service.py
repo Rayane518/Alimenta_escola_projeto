@@ -10,7 +10,7 @@ class HistoryService:
         return self.repository.fetch_training_history(school_id)
 
     def get_indicators(self, school_id=None):
-        rows = self.get_history(school_id)
+        return self.repository.get_meal_indicators(school_id)
 
         prepared = sum(
             float(r.get("refeicoes_preparadas") or 0)

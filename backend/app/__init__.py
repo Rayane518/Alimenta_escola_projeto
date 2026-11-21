@@ -1,13 +1,16 @@
+
 from flask import Flask, jsonify
 from flask_cors import CORS
-from app.controllers.school_controller import school_bp
 
+from app.controllers.school_controller import school_bp
 from app.controllers.health_controller import health_bp
 from app.controllers.history_controller import history_bp
 from app.controllers.prediction_controller import prediction_bp
 from app.controllers.training_controller import training_bp
 from app.controllers.auth_controller import auth_bp
 from app.controllers.class_controller import class_bp
+from app.controllers.meal_controller import meal_bp
+from app.controllers.menu_controller import menu_bp
 
 from app.infrastructure.config import load_config
 
@@ -21,7 +24,7 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    # Configurar CORS para o frontend React
+    # Configurar CORS para o frontend
     origins = app.config.get(
         "CORS_ORIGINS",
         "http://localhost:5173"
@@ -56,7 +59,8 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(school_bp, url_prefix="/api")
     app.register_blueprint(class_bp, url_prefix="/api")
-    
+    app.register_blueprint(meal_bp, url_prefix="/api")
+    app.register_blueprint(menu_bp, url_prefix="/api")
     # Verificar se o backend está online
     @app.get("/")
     def index():

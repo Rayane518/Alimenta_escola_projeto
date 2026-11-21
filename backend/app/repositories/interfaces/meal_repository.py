@@ -23,3 +23,11 @@ class MealRepository(ABC):
     @abstractmethod
     def get_predictions_history(self, school_id):
         raise NotImplementedError
+
+    @abstractmethod
+    def get_meal_indicators(self, school_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save_meal_record(self, record):
+        raise NotImplementedError
