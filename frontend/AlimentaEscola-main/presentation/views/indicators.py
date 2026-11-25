@@ -1,53 +1,137 @@
 
-from datetime import date, timedelta
-
 import pandas as pd
 import streamlit as st
+import requests
+
+from infrastructure.api.api_client import get_api_client
 
 
-def gerar_dados_demonstrativos():
-    registros = []
+def consultar_api(endpoint):
+    try:
+        resposta = get_api_client().get(endpoint)
 
-    dados_turnos = {
-        "Manhã": {
-            "previstos": 112,
-            "planejadas": 112,
-            "preparadas": 115,
-            "servidas": 108,
-        },
-        "Tarde": {
-            "previstos": 86,
-            "planejadas": 86,
-            "preparadas": 89,
-            "servidas": 83,
-        },
-    }
+        if resposta.status_code == 401:
+            st.error(
+                "Sua sessão expirou. Faça o login novamente."
+            )
+            return None
 
-    for dia in range(6, -1, -1):
-        data_registro = date.today() - timedelta(days=dia)
+        if resposta.status_code != 200:
+            st.error(
+                f"Não foi possível consultar {endpoint}."
+            )
+            return None
 
-        for turno, valores in dados_turnos.items():
-            variacao = dia % 4
+        return resposta.json()
 
-            preparados = valores["preparadas"] + variacao
-            servidos = valores["servidas"] + variacao
+    except requests.exceptions.ConnectionError:
+        st.error(
+            "Não foi possível conectar ao backend. "
+            "Verifique se o Flask está em execução."
+        )
+        return None
 
-            registros.append({
-                "Data": data_registro,
-                "Turno": turno,
-                "Alunos previstos": valores["previstos"] + variacao,
-                "Planejadas": valores["planejadas"] + variacao,
-                "Preparadas": preparados,
-                "Servidas": servidos,
-                "Sobras": preparados - servidos,
-            })
+    except requests.exceptions.Timeout:
+        st.error(
+            "O backend demorou muito para responder."
+        )
+        return None
 
-    return pd.DataFrame(registros)
+    except requests.exceptions.RequestException:
+        st.error(
+            "Ocorreu um erro na comunicação com o backend."
+        )
+        return None
+
+    except ValueError:
+        st.error("A API retornou um JSON inválido.")
+        return None
+
+
+def formatar_numero(valor):
+    return f"{int(valor):,}".replace(",", ".")
+
+
+def formatar_percentual(valor):
+    if valor is None:
+        return "—"
+
+    return f"{float(valor):.2f}%".replace(".", ",")
+
+
+def limpar_filtros(data_minima, data_maxima):
+    st.session_state["indicadores_data_inicial"] = data_minima
+    st.session_state["indicadores_data_final"] = data_maxima
+    st.session_state["indicadores_turno"] = "Todos"
+
+
+def mostrar_indicadores_gerais(indicadores):
+
+    st.markdown(
+        '<div class="section-title">'
+        'Indicadores gerais da escola'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "Totais de todos os registros de merenda "
+        "armazenados no banco, independentemente dos filtros."
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Refeições preparadas",
+            formatar_numero(
+                indicadores["total_refeicoes_preparadas"]
+            ),
+        )
+
+    with col2:
+        st.metric(
+            "Refeições servidas",
+            formatar_numero(
+                indicadores["total_refeicoes_servidas"]
+            ),
+        )
+
+    with col3:
+        st.metric(
+            "Sobras de refeições",
+            formatar_numero(
+                indicadores["total_sobras"]
+            ),
+        )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "Registros de merenda",
+            formatar_numero(
+                indicadores["registros"]
+            ),
+        )
+
+    with col2:
+        st.metric(
+            "Percentual geral de sobras",
+            formatar_percentual(
+                indicadores[
+                    "percentual_sobras_sobre_preparadas"
+                ]
+            ),
+        )
 
 
 def render():
+
     st.markdown(
-        '<div class="eyebrow">ACOMPANHAMENTO E RESULTADOS</div>',
+        '<div class="eyebrow">'
+        'ACOMPANHAMENTO E RESULTADOS'
+        '</div>',
         unsafe_allow_html=True,
     )
 
@@ -58,33 +142,164 @@ def render():
 
     st.markdown(
         '<div class="hero-subtitle">'
-        'Acompanhe os resultados da alimentação escolar e visualize '
-        'os dados de planejamento e desperdício.'
+        'Acompanhe os resultados da alimentação escolar '
+        'e visualize os indicadores de consumo e desperdício.'
         '</div>',
         unsafe_allow_html=True,
     )
 
     st.info(
-        "Protótipo acadêmico: todos os dados apresentados nesta página "
-        "são fictícios e utilizados apenas para demonstração. "
-        "Ainda não representam dados reais de escolas."
+        "Protótipo acadêmico: a base atual contém dados "
+        "simulados para demonstração do sistema."
     )
 
-    dados = gerar_dados_demonstrativos()
+    # Consulta os indicadores gerais
+    indicadores = consultar_api("/api/indicadores")
+
+    if indicadores is None:
+        return
+
+    campos_indicadores = [
+        "registros",
+        "total_refeicoes_preparadas",
+        "total_refeicoes_servidas",
+        "total_sobras",
+        "percentual_sobras_sobre_preparadas",
+    ]
+
+    if not isinstance(indicadores, dict) or not all(
+        campo in indicadores
+        for campo in campos_indicadores
+    ):
+        st.error(
+            "A API retornou indicadores em formato inesperado."
+        )
+        return
+
+    mostrar_indicadores_gerais(indicadores)
+
+    st.divider()
+
+    # Consulta os registros para filtros e gráficos
+    historico = consultar_api("/api/historico")
+
+    if historico is None:
+        return
+
+    if not isinstance(historico, list):
+        st.error(
+            "A API retornou um histórico em formato inesperado."
+        )
+        return
+
+    if not historico:
+        st.info(
+            "Não existem registros de frequência e merenda "
+            "disponíveis para análise por período."
+        )
+        return
+
+    dados = pd.DataFrame(historico)
+
+    colunas_necessarias = [
+        "data",
+        "turno",
+        "alunos_previstos",
+        "alunos_presentes",
+        "cardapio",
+        "refeicoes_preparadas",
+        "refeicoes_servidas",
+        "sobras",
+    ]
+
+    if not all(
+        coluna in dados.columns
+        for coluna in colunas_necessarias
+    ):
+        st.error(
+            "Os registros possuem uma estrutura diferente "
+            "da esperada."
+        )
+        return
+
+    # Tratamento das datas
+    dados["Data"] = pd.to_datetime(
+        dados["data"],
+        errors="coerce",
+    ).dt.date
+
+    dados = dados.dropna(
+        subset=["Data"]
+    ).copy()
+
+    if dados.empty:
+        st.warning("Não existem datas válidas para consulta.")
+        return
+
+    # Tratamento dos turnos
+    dados["Turno"] = dados["turno"].replace({
+        "MANHÃ": "Manhã",
+        "MANHA": "Manhã",
+        "TARDE": "Tarde",
+    })
+
+    # Conversão dos campos numéricos
+    colunas_numericas = [
+        "alunos_previstos",
+        "alunos_presentes",
+        "refeicoes_preparadas",
+        "refeicoes_servidas",
+        "sobras",
+    ]
+
+    for coluna in colunas_numericas:
+        dados[coluna] = pd.to_numeric(
+            dados[coluna],
+            errors="coerce",
+        )
+
+    if dados[colunas_numericas].isna().any().any():
+        st.error(
+            "Existem registros com valores numéricos inválidos."
+        )
+        return
+
+    data_minima = min(dados["Data"])
+    data_maxima = max(dados["Data"])
+
+    st.session_state.setdefault(
+        "indicadores_data_inicial",
+        data_minima,
+    )
+
+    st.session_state.setdefault(
+        "indicadores_data_final",
+        data_maxima,
+    )
+
+    st.session_state.setdefault(
+        "indicadores_turno",
+        "Todos",
+    )
+
+    st.markdown(
+        '<div class="section-title">'
+        'Filtros de consulta'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
         data_inicial = st.date_input(
             "Data inicial",
-            value=date.today() - timedelta(days=6),
             key="indicadores_data_inicial",
         )
 
     with col2:
         data_final = st.date_input(
             "Data final",
-            value=date.today(),
             key="indicadores_data_final",
         )
 
@@ -95,94 +310,149 @@ def render():
             key="indicadores_turno",
         )
 
-    if data_inicial > data_final:
-        st.error("A data inicial não pode ser posterior à data final.")
+    st.button(
+        "Limpar filtros",
+        on_click=limpar_filtros,
+        args=(data_minima, data_maxima),
+        width="stretch",
+    )
+
+    if data_inicial is None or data_final is None:
+        st.warning("Informe o período da consulta.")
         return
 
+    if data_inicial > data_final:
+        st.error(
+            "A data inicial não pode ser posterior à data final."
+        )
+        return
+
+    # Aplicação dos filtros
     dados_filtrados = dados[
         (dados["Data"] >= data_inicial)
         & (dados["Data"] <= data_final)
-    ]
+    ].copy()
 
     if turno_selecionado != "Todos":
         dados_filtrados = dados_filtrados[
             dados_filtrados["Turno"] == turno_selecionado
-        ]
+        ].copy()
 
     if dados_filtrados.empty:
         st.warning(
-            "Não existem dados demonstrativos para o período selecionado."
+            "Não existem registros para o período "
+            "e turno selecionados."
         )
         return
 
-    alunos = int(dados_filtrados["Alunos previstos"].sum())
-    planejadas = int(dados_filtrados["Planejadas"].sum())
-    preparadas = int(dados_filtrados["Preparadas"].sum())
-    servidas = int(dados_filtrados["Servidas"].sum())
-    sobras = int(dados_filtrados["Sobras"].sum())
+    # Cálculo dos indicadores do período
+    alunos = int(
+        dados_filtrados["alunos_previstos"].sum()
+    )
+
+    presentes = int(
+        dados_filtrados["alunos_presentes"].sum()
+    )
+
+    preparadas = int(
+        dados_filtrados["refeicoes_preparadas"].sum()
+    )
+
+    servidas = int(
+        dados_filtrados["refeicoes_servidas"].sum()
+    )
+
+    sobras = int(
+        dados_filtrados["sobras"].sum()
+    )
 
     percentual_sobras = (
-        (sobras / preparadas) * 100
+        sobras / preparadas * 100
         if preparadas > 0
-        else 0
+        else None
     )
 
     st.markdown(
-        '<div class="section-title">Resumo dos indicadores</div>',
+        '<div class="section-title">'
+        'Resumo dos indicadores do período'
+        '</div>',
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    st.caption(
+        "Resultados dos registros de frequência e merenda "
+        "correspondentes aos filtros selecionados."
+    )
+
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.metric(
-            "Alunos previstos",
-            f"{alunos:,}".replace(",", "."),
+            "Alunos previstos (acumulado)",
+            formatar_numero(alunos),
         )
 
     with col2:
         st.metric(
-            "Refeições planejadas",
-            f"{planejadas:,}".replace(",", "."),
+            "Presenças registradas",
+            formatar_numero(presentes),
         )
 
     with col3:
         st.metric(
             "Refeições preparadas",
-            f"{preparadas:,}".replace(",", "."),
+            formatar_numero(preparadas),
         )
 
-    with col4:
-        st.metric(
-            "Refeições servidas",
-            f"{servidas:,}".replace(",", "."),
-        )
-
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.metric(
-            "Sobras de refeições",
-            f"{sobras:,}".replace(",", "."),
+            "Refeições servidas",
+            formatar_numero(servidas),
         )
 
     with col2:
         st.metric(
-            "Percentual de sobras",
-            f"{percentual_sobras:.1f}%".replace(".", ","),
+            "Sobras de refeições",
+            formatar_numero(sobras),
         )
+
+    with col3:
+        st.metric(
+            "Percentual de sobras",
+            formatar_percentual(percentual_sobras),
+        )
+
+    st.caption(
+        "Os totais de alunos e presenças são acumulados "
+        "por data e turno, não representam alunos únicos."
+    )
 
     st.divider()
 
+    # Gráfico de refeições preparadas e servidas
     st.markdown(
-        '<div class="section-title">Planejamento e execução</div>',
+        '<div class="section-title">'
+        'Preparação e consumo de refeições'
+        '</div>',
         unsafe_allow_html=True,
     )
 
     resumo_diario = (
         dados_filtrados
-        .groupby("Data")[["Planejadas", "Preparadas", "Servidas"]]
+        .groupby("Data")[
+            [
+                "refeicoes_preparadas",
+                "refeicoes_servidas",
+            ]
+        ]
         .sum()
+        .sort_index()
+        .rename(columns={
+            "refeicoes_preparadas": "Preparadas",
+            "refeicoes_servidas": "Servidas",
+        })
     )
 
     st.bar_chart(
@@ -190,15 +460,22 @@ def render():
         height=320,
     )
 
+    # Gráfico de sobras
     st.markdown(
-        '<div class="section-title">Acompanhamento das sobras</div>',
+        '<div class="section-title">'
+        'Acompanhamento das sobras'
+        '</div>',
         unsafe_allow_html=True,
     )
 
     sobras_diarias = (
         dados_filtrados
-        .groupby("Data")[["Sobras"]]
+        .groupby("Data")[["sobras"]]
         .sum()
+        .sort_index()
+        .rename(columns={
+            "sobras": "Sobras",
+        })
     )
 
     st.line_chart(
@@ -206,25 +483,50 @@ def render():
         height=280,
     )
 
+    # Tabela detalhada
     st.markdown(
-        '<div class="section-title">Detalhamento dos registros</div>',
+        '<div class="section-title">'
+        'Detalhamento dos registros'
+        '</div>',
         unsafe_allow_html=True,
     )
 
-    tabela = dados_filtrados.copy()
+    tabela = dados_filtrados.sort_values(
+        by=["Data", "Turno"],
+        ascending=[False, True],
+    ).copy()
 
     tabela["Data"] = tabela["Data"].apply(
         lambda valor: valor.strftime("%d/%m/%Y")
     )
 
-    tabela = tabela.rename(columns={
-        "Planejadas": "Refeições planejadas",
-        "Preparadas": "Refeições preparadas",
-        "Servidas": "Refeições servidas",
+    tabela = tabela[
+        [
+            "Data",
+            "Turno",
+            "cardapio",
+            "alunos_previstos",
+            "alunos_presentes",
+            "refeicoes_preparadas",
+            "refeicoes_servidas",
+            "sobras",
+        ]
+    ].rename(columns={
+        "cardapio": "Cardápio",
+        "alunos_previstos": "Alunos previstos",
+        "alunos_presentes": "Alunos presentes",
+        "refeicoes_preparadas": "Refeições preparadas",
+        "refeicoes_servidas": "Refeições servidas",
+        "sobras": "Sobras",
     })
 
     st.dataframe(
         tabela,
         width="stretch",
         hide_index=True,
+    )
+
+    st.caption(
+        f"Total de registros encontrados: {len(tabela)}. "
+        "Informações consultadas no banco de dados pela API."
     )

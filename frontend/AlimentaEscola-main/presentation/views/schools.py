@@ -1,7 +1,10 @@
 
 import re
 
+import requests
 import streamlit as st
+
+from infrastructure.api.api_client import get_api_client
 
 
 ESTADOS = [
@@ -13,10 +16,28 @@ ESTADOS = [
 ]
 
 
-def validar_cnpj(cnpj):
-    cnpj = re.sub(r"\D", "", cnpj)
+CAMPOS = [
+    "nome",
+    "cnpj",
+    "cep",
+    "endereco",
+    "numero",
+    "complemento",
+    "bairro",
+    "cidade",
+    "estado",
+    "telefone",
+    "email",
+]
 
-    if len(cnpj) != 14 or len(set(cnpj)) == 1:
+
+def validar_cnpj(cnpj):
+    cnpj = re.sub(r"[./-]", "", cnpj)
+
+    if not re.fullmatch(r"[0-9]{14}", cnpj):
+        return False
+
+    if len(set(cnpj)) == 1:
         return False
 
     pesos_1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -44,23 +65,81 @@ def validar_cnpj(cnpj):
     return cnpj[-2:] == f"{primeiro}{segundo}"
 
 
-def limpar_campos():
-    campos = [
-        "escola_nome",
-        "escola_cnpj",
-        "escola_cep",
-        "escola_endereco",
-        "escola_numero",
-        "escola_complemento",
-        "escola_bairro",
-        "escola_cidade",
-        "escola_estado",
-        "escola_telefone",
-        "escola_email",
-    ]
+def carregar_escola():
+    try:
+        resposta = get_api_client().get("/api/escola")
 
-    for campo in campos:
-        st.session_state[campo] = "" if campo != "escola_estado" else "Selecione"
+        if resposta.status_code == 401:
+            st.error("Sessão expirada. Realize o login novamente.")
+            return None
+
+        if resposta.status_code != 200:
+            st.error("Não foi possível consultar os dados da escola.")
+            return None
+
+        return resposta.json()
+
+    except requests.RequestException:
+        st.error("Não foi possível conectar ao backend.")
+        return None
+
+    except ValueError:
+        st.error("Resposta inválida recebida do backend.")
+        return None
+
+
+def preencher_campos(escola):
+    for campo in CAMPOS:
+        valor = escola.get(campo)
+
+        if campo == "estado":
+            valor = valor if valor in ESTADOS else "Selecione"
+        else:
+            valor = str(valor) if valor is not None else ""
+
+        st.session_state[f"escola_{campo}"] = valor
+
+
+def restaurar_dados():
+    st.session_state["escola_recarregar"] = True
+
+
+def salvar_escola(dados):
+    try:
+        resposta = get_api_client().put(
+            "/api/escola",
+            json=dados,
+        )
+
+        if resposta.status_code == 200:
+            resultado = resposta.json()
+
+            st.session_state["escola_mensagem"] = (
+                resultado.get(
+                    "mensagem",
+                    "Dados atualizados com sucesso."
+                )
+            )
+
+            st.session_state["escola_recarregar"] = True
+            st.rerun()
+
+        elif resposta.status_code == 401:
+            st.error("Sessão expirada. Realize o login novamente.")
+
+        else:
+            try:
+                erro = resposta.json().get(
+                    "erro",
+                    "Não foi possível atualizar a escola."
+                )
+            except ValueError:
+                erro = "Não foi possível atualizar a escola."
+
+            st.error(erro)
+
+    except requests.RequestException:
+        st.error("Não foi possível conectar ao backend.")
 
 
 def render():
@@ -70,38 +149,63 @@ def render():
     )
 
     st.markdown(
-        '<h1 class="hero-title">Cadastro de escolas</h1>',
+        '<h1 class="hero-title">Dados da escola</h1>',
         unsafe_allow_html=True,
     )
 
     st.markdown(
         '<div class="hero-subtitle">'
-        'Cadastre e organize as informações das unidades escolares.'
+        'Consulte e atualize as informações da sua instituição.'
         '</div>',
         unsafe_allow_html=True,
     )
 
+    escola = carregar_escola()
+
+    if escola is None:
+        return
+
+    recarregar = st.session_state.pop(
+        "escola_recarregar", False
+    )
+
+    campos_ausentes = any(
+        f"escola_{campo}" not in st.session_state
+        for campo in CAMPOS
+    )
+
+    if recarregar or campos_ausentes:
+        preencher_campos(escola)
+
+    mensagem = st.session_state.pop(
+        "escola_mensagem", None
+    )
+
+    if mensagem:
+        st.success(mensagem)
+
     st.markdown(
-        '<div class="section-title">Dados da escola</div>',
+        '<div class="section-title">Dados institucionais</div>',
         unsafe_allow_html=True,
     )
 
     with st.form("form_cadastro_escola"):
+
         nome = st.text_input(
             "Nome da escola *",
-            placeholder="Digite o nome da escola",
+            max_chars=150,
             key="escola_nome",
         )
 
         cnpj = st.text_input(
-            "CNPJ *",
+            "CNPJ",
             placeholder="00.000.000/0000-00",
             max_chars=18,
             key="escola_cnpj",
         )
 
         cep = st.text_input(
-            "CEP *",
+            "CEP",
             placeholder="00000-000",
             max_chars=9,
             key="escola_cep",
@@ -110,6 +214,7 @@ def render():
         endereco = st.text_input(
             "Endereço *",
             placeholder="Rua, avenida ou estrada",
+            max_chars=255,
             key="escola_endereco",
         )
 
@@ -118,14 +223,14 @@ def render():
         with col1:
             numero = st.text_input(
                 "Número *",
-                placeholder="Número",
+                max_chars=20,
                 key="escola_numero",
             )
 
         with col2:
             complemento = st.text_input(
                 "Complemento",
-                placeholder="Sala, bloco ou referência",
+                max_chars=100,
                 key="escola_complemento",
             )
 
@@ -134,14 +239,14 @@ def render():
         with col3:
             bairro = st.text_input(
                 "Bairro *",
-                placeholder="Digite o bairro",
+                max_chars=100,
                 key="escola_bairro",
             )
 
         with col4:
             cidade = st.text_input(
                 "Cidade *",
-                placeholder="Digite a cidade",
+                max_chars=100,
                 key="escola_cidade",
             )
 
@@ -158,12 +263,14 @@ def render():
             telefone = st.text_input(
                 "Telefone",
                 placeholder="(00) 00000-0000",
+                max_chars=20,
                 key="escola_telefone",
             )
 
         email = st.text_input(
             "E-mail institucional",
             placeholder="contato@escola.com.br",
+            max_chars=150,
             key="escola_email",
         )
 
@@ -172,29 +279,31 @@ def render():
         col7, col8 = st.columns(2)
 
         with col7:
-            cadastrar = st.form_submit_button(
-                "Cadastrar escola",
+            salvar = st.form_submit_button(
+                "Salvar alterações",
                 width="stretch",
                 type="primary",
             )
 
         with col8:
             st.form_submit_button(
-                "Limpar formulário",
+                "Restaurar dados",
                 width="stretch",
-                on_click=limpar_campos,
+                on_click=restaurar_dados,
             )
 
-    if cadastrar:
+    if salvar:
         erros = []
 
         if not nome.strip():
             erros.append("Informe o nome da escola.")
 
-        if not validar_cnpj(cnpj):
+        if cnpj.strip() and not validar_cnpj(cnpj.strip()):
             erros.append("Informe um CNPJ válido.")
 
-        if len(re.sub(r"\D", "", cep)) != 8:
+        if cep.strip() and not re.fullmatch(
+            r"[0-9]{8}", cep.strip().replace("-", "")
+        ):
             erros.append("Informe um CEP válido com 8 dígitos.")
 
         if not endereco.strip():
@@ -212,6 +321,17 @@ def render():
         if estado == "Selecione":
             erros.append("Selecione o estado.")
 
+        if telefone.strip():
+            telefone_limpo = re.sub(
+                r"[^0-9]", "", telefone
+            )
+
+            if (
+                not re.fullmatch(r"[0-9()\s-]+", telefone)
+                or len(telefone_limpo) not in (10, 11)
+            ):
+                erros.append("Informe um telefone válido.")
+
         if email.strip() and not re.fullmatch(
             r"[^@\s]+@[^@\s]+\.[^@\s]+",
             email.strip(),
@@ -221,9 +341,20 @@ def render():
         if erros:
             for erro in erros:
                 st.error(erro)
+
         else:
-            st.info(
-                "Os dados foram validados. O cadastro será gravado "
-                "quando o backend Flask e o banco de dados estiverem "
-                "integrados."
-            )
+            dados = {
+                "nome": nome.strip(),
+                "cnpj": cnpj.strip() or None,
+                "cep": cep.strip() or None,
+                "endereco": endereco.strip(),
+                "numero": numero.strip(),
+                "complemento": complemento.strip() or None,
+                "bairro": bairro.strip(),
+                "cidade": cidade.strip(),
+                "estado": estado,
+                "telefone": telefone.strip() or None,
+                "email": email.strip() or None,
+            }
+
+            salvar_escola(dados)

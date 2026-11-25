@@ -1,3 +1,4 @@
+
 from app.infrastructure.database.connection import get_connection
 
 
@@ -11,10 +12,23 @@ class MySQLSchoolRepository:
 
             cursor.execute(
                 """
-                SELECT id_escola, nome, endereco, criado_em
+                SELECT
+                    id_escola,
+                    nome,
+                    endereco,
+                    criado_em,
+                    cnpj,
+                    cep,
+                    numero,
+                    complemento,
+                    bairro,
+                    cidade,
+                    estado,
+                    telefone,
+                    email
                 FROM escolas
                 WHERE id_escola = %s
-                """,
+                """.replace("id_esola", "id_escola"),
                 (school_id,)
             )
 
@@ -23,7 +37,21 @@ class MySQLSchoolRepository:
         finally:
             connection.close()
 
-    def update(self, school_id, name, address):
+    def update(
+        self,
+        school_id,
+        name,
+        address,
+        cnpj,
+        cep,
+        numero,
+        complemento,
+        bairro,
+        cidade,
+        estado,
+        telefone,
+        email
+    ):
         connection = get_connection()
 
         try:
@@ -32,15 +60,53 @@ class MySQLSchoolRepository:
             cursor.execute(
                 """
                 UPDATE escolas
-                SET nome = %s, endereco = %s
+                SET
+                    nome = %s,
+                    endereco = %s,
+                    cnpj = %s,
+                    cep = %s,
+                    numero = %s,
+                    complemento = %s,
+                    bairro = %s,
+                    cidade = %s,
+                    estado = %s,
+                    telefone = %s,
+                    email = %s
                 WHERE id_escola = %s
                 """,
-                (name, address, school_id)
+                (
+                    name,
+                    address,
+                    cnpj,
+                    cep,
+                    numero,
+                    complemento,
+                    bairro,
+                    cidade,
+                    estado,
+                    telefone,
+                    email,
+                    school_id
+                )
             )
+
+            if cursor.rowcount == 0:
+                cursor.execute(
+                    """
+                    SELECT id_escola
+                    FROM escolas
+                    WHERE id_escola = %s
+                    """,
+                    (school_id,)
+                )
+
+                if cursor.fetchone() is None:
+                    connection.rollback()
+                    return False
 
             connection.commit()
 
-            return cursor.rowcount > 0
+            return True
 
         except Exception:
             connection.rollback()
@@ -48,4 +114,3 @@ class MySQLSchoolRepository:
 
         finally:
             connection.close()
-
