@@ -1,0 +1,24 @@
+﻿# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Arquivos confidenciais
+.env
+.env.*
+!.env.example
+
+# Temporários
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+
+# Streamlit
+.streamlit/secrets.toml

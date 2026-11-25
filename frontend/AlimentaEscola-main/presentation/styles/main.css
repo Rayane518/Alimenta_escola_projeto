@@ -1,0 +1,297 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html,
+body,
+[class*="css"] {
+    font-family: Inter, sans-serif;
+}
+
+.stApp {
+    background: #f3f6fc;
+    color: #11294b;
+}
+
+[data-testid="stHeader"] {
+    background: #f3f6fc;
+}
+
+[data-testid="stAppDeployButton"],
+#MainMenu,
+footer {
+    display: none !important;
+}
+
+.block-container {
+    max-width: 1500px;
+    padding: 3rem 3.2rem 2rem;
+}
+
+/* Barra lateral */
+[data-testid="stSidebar"] {
+    background: linear-gradient(165deg, #102c52 0%, #0a1b33 100%);
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    padding: 1.5rem 1.1rem;
+}
+
+[data-testid="stSidebar"] * {
+    color: #f5f8ff;
+}
+
+/* Remover navegação automática */
+[data-testid="stSidebarNav"],
+[data-testid="stSidebarNavItems"],
+[data-testid="stSidebarNavSeparator"] {
+    display: none !important;
+}
+
+/* Identidade visual */
+.brand-kicker {
+    text-align: center;
+    color: #91b7ff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    margin: 4px 0 16px;
+}
+
+.brand-caption {
+    text-align: center;
+    color: #c5d4e9;
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 12px 0 25px;
+}
+
+.side-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, .15);
+    margin: 0 0 23px;
+}
+
+.menu-label {
+    color: #91b7ff;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-weight: 800;
+    margin: 8px 0 15px 4px;
+}
+
+/* Logo */
+[data-testid="stSidebar"] [data-testid="stImage"] {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto 8px;
+}
+
+[data-testid="stSidebar"] [data-testid="stImage"] img {
+    width: 95px !important;
+    max-width: 95px !important;
+    height: auto !important;
+    object-fit: contain;
+}
+
+/* Menu personalizado */
+[data-testid="stSidebar"] [data-testid="stRadio"] > div {
+    gap: 9px !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 44px;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, .08) !important;
+    background: rgba(255, 255, 255, .045) !important;
+    transition: all .2s ease;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    background: rgba(53, 112, 225, .25) !important;
+    border-color: rgba(125, 170, 255, .35) !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(100deg, #2865d9, #1c4fae) !important;
+    border-color: #6094f4 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    color: #f5f8ff !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child {
+    margin-right: 9px;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label svg {
+    color: #a9c8ff !important;
+}
+
+/* Títulos */
+.eyebrow {
+    color: #3677ee;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 9px;
+}
+
+.hero-title {
+    color: #10294c;
+    font-size: 40px;
+    line-height: 1.15;
+    font-weight: 800;
+    letter-spacing: -1.4px;
+    margin: 0;
+}
+
+.hero-subtitle {
+    color: #687b98;
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 9px 0 25px;
+}
+
+.section-title {
+    font-size: 23px;
+    font-weight: 800;
+    color: #12294b;
+    margin: 8px 0 17px;
+}
+
+/* Avisos */
+.notice {
+    background: #e2edff;
+    color: #1755b7;
+    border: 1px solid #d3e3ff;
+    padding: 16px 20px;
+    border-radius: 13px;
+    margin: 8px 0 27px;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* Indicadores */
+.metric {
+    background: #fff;
+    border: 1px solid #e0e8f4;
+    border-radius: 17px;
+    padding: 20px;
+    min-height: 145px;
+    box-shadow: 0 4px 15px rgba(20, 49, 91, .045);
+}
+
+.metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 14px;
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+.icon-blue {
+    background: #e5efff;
+    color: #2672e8;
+}
+
+.icon-green {
+    background: #e0f7ec;
+    color: #12a66a;
+}
+
+.icon-orange {
+    background: #fff0e4;
+    color: #ed7a26;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: #536783;
+    margin-bottom: 8px;
+}
+
+.metric-value {
+    font-size: 34px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: #12294b;
+}
+
+/* Cartões */
+.info-card {
+    background: #fff;
+    border: 1px solid #e0e8f4;
+    border-radius: 17px;
+    padding: 23px;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(20, 49, 91, .035);
+}
+
+.info-heading {
+    font-size: 20px;
+    font-weight: 800;
+    color: #12294b;
+    margin-bottom: 10px;
+}
+
+.info-text {
+    font-size: 14px;
+    color: #536783;
+    line-height: 1.85;
+}
+
+/* Formulários */
+div[data-testid="stForm"] {
+    background: white;
+    border: 1px solid #e0e8f4;
+    border-radius: 17px;
+    padding: 24px;
+    box-shadow: 0 4px 15px rgba(20, 49, 91, .035);
+}
+
+/* Botões */
+div.stFormSubmitButton > button,
+div.stButton > button {
+    background: #2865d9;
+    color: white;
+    border: 1px solid #2865d9;
+    border-radius: 10px;
+    min-height: 44px;
+    font-weight: 700;
+}
+
+div.stFormSubmitButton > button:hover,
+div.stButton > button:hover {
+    background: #174db5;
+    color: white;
+    border-color: #174db5;
+}
+
+/* Métricas Streamlit */
+[data-testid="stMetric"] {
+    background: white;
+    border: 1px solid #e0e8f4;
+    border-radius: 15px;
+    padding: 18px;
+}
+
+/* Responsividade */
+@media (max-width: 800px) {
+    .block-container {
+        padding: 2rem 1rem;
+    }
+
+    .hero-title {
+        font-size: 32px;
+    }
+}
