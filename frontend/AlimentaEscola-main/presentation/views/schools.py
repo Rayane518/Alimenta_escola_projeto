@@ -1,4 +1,3 @@
-
 import re
 
 import requests
@@ -100,7 +99,13 @@ def preencher_campos(escola):
         st.session_state[f"escola_{campo}"] = valor
 
 
-def restaurar_dados():
+def iniciar_edicao():
+    st.session_state["escola_editando"] = True
+    st.session_state["escola_recarregar"] = True
+
+
+def cancelar_edicao():
+    st.session_state["escola_editando"] = False
     st.session_state["escola_recarregar"] = True
 
 
@@ -121,6 +126,7 @@ def salvar_escola(dados):
                 )
             )
 
+            st.session_state["escola_editando"] = False
             st.session_state["escola_recarregar"] = True
             st.rerun()
 
@@ -141,15 +147,75 @@ def salvar_escola(dados):
     except requests.RequestException:
         st.error("Não foi possível conectar ao backend.")
 
+def exibir_campo(titulo, valor):
+    st.caption(titulo)
+    st.write(str(valor) if valor else "Não informado")
+
+
+def exibir_dados_escola(escola):
+
+    st.markdown(
+        '<div class="section-title">'
+        'Instituição vinculada ao sistema'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.container(border=True):
+
+        st.subheader(
+            escola.get("nome") or "Escola não identificada"
+        )
+
+        st.caption(
+            "Instituição de ensino cadastrada no Alimenta Escola."
+        )
+
+        st.divider()
+
+        st.markdown("**Dados institucionais**")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            exibir_campo("CNPJ", escola.get("cnpj"))
+            exibir_campo("Telefone", escola.get("telefone"))
+
+        with col2:
+            exibir_campo("E-mail institucional", escola.get("email"))
+
+        st.divider()
+
+        st.markdown("**Endereço da instituição**")
+
+        col3, col4 = st.columns(2)
+
+        with col3:
+            exibir_campo("Logradouro", escola.get("endereco"))
+            exibir_campo("Número", escola.get("numero"))
+            exibir_campo("Bairro", escola.get("bairro"))
+            exibir_campo("CEP", escola.get("cep"))
+
+        with col4:
+            exibir_campo("Complemento", escola.get("complemento"))
+            exibir_campo("Cidade", escola.get("cidade"))
+            exibir_campo("Estado", escola.get("estado"))
+
+    st.button(
+        "Editar dados da escola",
+        type="primary",
+        on_click=iniciar_edicao,
+        key="btn_editar_escola",
+    )
 
 def render():
     st.markdown(
-        '<div class="eyebrow">GESTÃO ALIMENTAR</div>',
+        '<div class="eyebrow">GESTÃO ESCOLAR</div>',
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        '<h1 class="hero-title">Dados da escola</h1>',
+        '<h1 class="hero-title">Minha escola</h1>',
         unsafe_allow_html=True,
     )
 
@@ -165,6 +231,17 @@ def render():
     if escola is None:
         return
 
+    mensagem = st.session_state.pop(
+        "escola_mensagem", None
+    )
+
+    if mensagem:
+        st.success(mensagem)
+
+    if not st.session_state.get("escola_editando", False):
+        exibir_dados_escola(escola)
+        return
+
     recarregar = st.session_state.pop(
         "escola_recarregar", False
     )
@@ -177,15 +254,8 @@ def render():
     if recarregar or campos_ausentes:
         preencher_campos(escola)
 
-    mensagem = st.session_state.pop(
-        "escola_mensagem", None
-    )
-
-    if mensagem:
-        st.success(mensagem)
-
     st.markdown(
-        '<div class="section-title">Dados institucionais</div>',
+        '<div class="section-title">Editar dados institucionais</div>',
         unsafe_allow_html=True,
     )
 
@@ -287,10 +357,10 @@ def render():
 
         with col8:
             st.form_submit_button(
-                "Restaurar dados",
-                width="stretch",
-                on_click=restaurar_dados,
-            )
+             "Cancelar",
+            width="stretch",
+            on_click=cancelar_edicao,
+    )
 
     if salvar:
         erros = []

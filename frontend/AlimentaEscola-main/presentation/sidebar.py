@@ -12,7 +12,6 @@ LOGO = BASE_DIR / "assets" / "logo_alimenta_escola.png"
 
 PAGINAS_CADASTRO = {
     "Cardápios": ("Cadastro de cardápios", ":material/restaurant:"),
-    "Escolas": ("Cadastro de escolas", ":material/school:"),
     "Turmas": ("Cadastro de turmas", ":material/groups:"),
 }
 
@@ -213,6 +212,16 @@ def render_sidebar():
             type="primary" if pagina_atual == "Visão geral" else "secondary",
             on_click=selecionar_pagina,
             args=("Visão geral",),
+        )
+
+        st.button(
+            "Minha escola",
+            key="menu_minha_escola",
+            icon=":material/school:",
+            width="stretch",
+            type="primary" if pagina_atual == "Minha escola" else "secondary",
+            on_click=selecionar_pagina,
+            args=("Minha escola",),
         )
 
         st.button(

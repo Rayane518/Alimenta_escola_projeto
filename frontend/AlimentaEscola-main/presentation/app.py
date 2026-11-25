@@ -92,7 +92,7 @@ def load_styles():
 def render_page(pagina):
     paginas_existentes = {
         "Visão geral": overview.render,
-        "Cadastro de escolas": schools.render,
+        "Minha escola": schools.render,
         "Cadastro de turmas": classes.render,
         "Cadastro de cardápios": menus.render,
         "Gestão de refeições": meals.render,

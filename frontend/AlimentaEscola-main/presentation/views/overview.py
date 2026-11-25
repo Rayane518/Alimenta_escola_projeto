@@ -15,9 +15,17 @@ FUNCIONALIDADES = {
         "palavras": ["cardapio", "cardapios", "menu", "alimentacao"],
         "icone": "🍽️",
     },
-    "Escolas": {
-        "pagina": "Cadastro de escolas",
-        "palavras": ["escola", "escolas", "cnpj"],
+        "Minha escola": {
+        "pagina": "Minha escola",
+        "palavras": [
+            "escola",
+            "escolas",
+            "minha escola",
+            "instituicao",
+            "cnpj",
+            "endereco",
+            "dados da escola",
+        ],
         "icone": "🏫",
     },
     "Turmas": {
