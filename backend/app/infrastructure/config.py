@@ -2,16 +2,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# LOCALIZAÇÃO DA PASTA BACKEND
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
-# CARREGAMENTO DAS VARIÁVEIS .ENV
-
-
 load_dotenv(BACKEND_ROOT / ".env")
 
-# VALIDAÇÃO DA CHAVE DE SEGURANÇA
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -24,7 +19,8 @@ if not SECRET_KEY or len(SECRET_KEY) < 32:
 
 def load_config():
     return {
-        # BANCO DE DADOS MYSQL
+
+        
 
         "DB_HOST": os.getenv(
             "DB_HOST",
@@ -50,7 +46,7 @@ def load_config():
             "alimenta_escola"
         ),
 
-        # CONFIGURAÇÕES DO FLASK
+       
 
         "FLASK_HOST": os.getenv(
             "FLASK_HOST",
@@ -63,36 +59,35 @@ def load_config():
 
         "FLASK_DEBUG": os.getenv(
             "FLASK_DEBUG",
-            "true"
+            "false"
         ).lower() == "true",
 
-        # COMUNICAÇÃO COM REACT
+      
 
         "CORS_ORIGINS": os.getenv(
             "CORS_ORIGINS",
-            "http://localhost:5173"
+            "http://localhost:8501"
         ),
 
-        # MACHINE LEARNING
-
-        "MODEL_PATH": str((
+       
+        "MODELS_DIR": str((
             BACKEND_ROOT / os.getenv(
-                "MODEL_PATH",
-                "app/machine_learning/models/modelo_merenda.joblib"
+                "MODELS_DIR",
+                "app/machine_learning/models"
             )
         ).resolve()),
 
-        # AUTENTICAÇÃO E SESSÃO
+      
 
         "SECRET_KEY": SECRET_KEY,
 
-        # Impede que JavaScript leia o cookie
         "SESSION_COOKIE_HTTPONLY": True,
 
-        # Permite cookies em requisições same-site
         "SESSION_COOKIE_SAMESITE": "Lax",
 
-        # False somente para desenvolvimento HTTP local
-        "SESSION_COOKIE_SECURE": False,
+        "SESSION_COOKIE_SECURE": os.getenv(
+            "SESSION_COOKIE_SECURE",
+            "false"
+        ).lower() == "true",
 
     }

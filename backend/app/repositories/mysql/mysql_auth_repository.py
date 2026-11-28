@@ -33,7 +33,6 @@ class MySQLAuthRepository:
 
             connection.close()
 
-    # VERIFICAR SE O CPF JÁ ESTÁ CADASTRADO
     def find_by_cpf(self, cpf):
         sql = """
             SELECT id_usuario
@@ -79,7 +78,7 @@ class MySQLAuthRepository:
 
             connection.close()
 
-    # CADASTRAR NOVO GESTOR
+   
     def create(self, school_id, name, cpf, email, password_hash):
         sql = """
             INSERT INTO usuarios (

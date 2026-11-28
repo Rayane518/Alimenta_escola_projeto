@@ -63,7 +63,7 @@ def validate_prediction_payload(data):
             "Para previsão ATUALIZADA, informe alunos_referencia confirmados."
         )
 
-    # NOVO: validação da margem de segurança
+    
     safety_margin = data.get("margem_seguranca", 10)
 
     if type(safety_margin) is not int:

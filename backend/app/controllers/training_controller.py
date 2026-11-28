@@ -11,7 +11,7 @@ service = TrainingService()
 @training_bp.post("/modelo/treinar")
 def train_model():
 
-    # 1. Verificar se o gestor está autenticado
+
     id_usuario = session.get("id_usuario")
     id_escola = session.get("id_escola")
 
@@ -21,10 +21,10 @@ def train_model():
         }), 401
 
     try:
-        # 2. Utilizar a escola vinculada ao gestor
+       
         resultado = service.train(id_escola)
 
-        # 3. Retornar o resultado do treinamento
+        
         return jsonify(resultado), 200
 
     except BusinessError as error:

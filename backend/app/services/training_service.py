@@ -8,16 +8,14 @@ class TrainingService:
         self.model = model or MealDemandModel()
 
     def train(self, school_id=None):
-        # Buscar histórico da escola no MySQL
+       
         history = self.repository.fetch_training_history(school_id)
 
-        # Treinar o modelo de presença
+       
         resultado_presenca = self.model.train_attendance(history)
 
-        # Treinar o modelo de refeições
         resultado_refeicoes = self.model.train(history)
 
-        # Retornar os resultados dos dois treinamentos
         return {
             "status": "treinado",
             "escola": school_id,

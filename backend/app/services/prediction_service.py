@@ -11,7 +11,7 @@ class PredictionService:
         self.model = model or MealDemandModel()
 
     def predict(self, request):
-        # Consultar a quantidade de alunos matriculados
+       
         enrollment = self.repository.get_active_enrollment(
             request.school_id,
             request.shift
@@ -22,7 +22,6 @@ class PredictionService:
                 "Não há alunos matriculados neste turno."
             )
 
-        # Verificar se o gestor informou uma quantidade
         students = request.students_reference
 
         if students is not None:
@@ -33,7 +32,7 @@ class PredictionService:
             attendance_source = "informado_pelo_gestor"
 
         else:
-            # Utilizar o modelo de Machine Learning
+            
             attendance = self.model.predict_attendance(
                 target_date=request.target_date,
                 shift=request.shift,
@@ -43,7 +42,6 @@ class PredictionService:
             students = attendance["alunos_estimados"]
             attendance_source = "machine_learning"
 
-        # Consultar o histórico do MySQL
         history = self.repository.fetch_training_history(
             request.school_id
         )
@@ -53,7 +51,6 @@ class PredictionService:
                 "Não há histórico suficiente para previsão."
             )
 
-        # Prever a quantidade de refeições
         result = self.model.predict(
             history,
             request.target_date,
@@ -62,7 +59,7 @@ class PredictionService:
             request.menu_description
         )
 
-        # NOVO: calcular a margem de segurança
+        
         meals_estimated = result["refeicoes_estimadas"]
         safety_margin = request.safety_margin
 
@@ -70,7 +67,7 @@ class PredictionService:
             meals_estimated * (1 + safety_margin / 100)
         )
 
-        # Preparar o registro para o MySQL
+        
         record = {
             "id_escola": request.school_id,
             "data_prevista": request.target_date,
@@ -82,8 +79,7 @@ class PredictionService:
             "margem_seguranca": safety_margin,
             "refeicoes_recomendadas": meals_recommended
         }
-
-        # Salvar previsão
+       
         prediction_id = self.repository.save_prediction(record)
 
         return {

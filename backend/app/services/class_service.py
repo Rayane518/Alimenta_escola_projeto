@@ -9,11 +9,10 @@ class ClassService:
     def __init__(self, repository=None):
         self.repository = repository or MySQLClassRepository()
 
-    # LISTAR TURMAS
     def list_classes(self, school_id):
         return self.repository.list_by_school(school_id)
 
-    # CADASTRAR TURMA
+  
     def create_class(self, school_id, data):
         if not isinstance(data, dict):
             raise BusinessError("Envie um JSON válido.")
@@ -61,7 +60,6 @@ class ClassService:
 
         return self.get_class(school_id, class_id)
 
-    # CONSULTAR TURMA PELO ID
     def get_class(self, school_id, class_id):
         if type(class_id) is not int or class_id <= 0:
             raise BusinessError("ID da turma inválido.")
@@ -73,7 +71,6 @@ class ClassService:
 
         return turma
 
-    # ATUALIZAR TURMA
     def update_class(self, school_id, class_id, data):
         if not isinstance(data, dict) or not data:
             raise BusinessError("Informe um JSON com os dados da turma.")
@@ -88,7 +85,7 @@ class ClassService:
             turma_atual["quantidade_alunos"]
         )
 
-         # IMPEDIR ALTERAÇÃO DO TURNO SE EXISTIR HISTÓRICO
+        
         if shift != turma_atual["turno"]:
             if self.repository.has_attendance_history(
                 school_id, class_id
@@ -141,7 +138,6 @@ class ClassService:
 
         return self.get_class(school_id, class_id)
     
-# ATIVAR OU DESATIVAR TURMA
     def update_class_status(self, school_id, class_id, data):
         if not isinstance(data, dict):
             raise BusinessError("Envie um JSON válido.")
@@ -156,7 +152,7 @@ class ClassService:
                 "O campo ativa deve ser true ou false."
             )
 
-        # Confirma que a turma pertence à escola autenticada
+       
         self.get_class(school_id, class_id)
 
         self.repository.update_status(

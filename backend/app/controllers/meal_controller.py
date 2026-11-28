@@ -19,7 +19,6 @@ service = MealService()
 @meal_bp.post("/merenda")
 def register_meal():
 
-    # Verificar autenticação
     id_escola = session.get("id_escola")
     id_usuario = session.get("id_usuario")
 
@@ -29,10 +28,10 @@ def register_meal():
         }), 401
 
     try:
-        # Receber os dados do frontend
+        
         dados = request.get_json(silent=True)
 
-        # Validar e salvar o registro
+       
         resultado = service.register_meal(
             id_escola,
             dados
@@ -47,7 +46,7 @@ def register_meal():
 
     except IntegrityError as error:
 
-        # Registro duplicado
+    
         if error.errno == 1062:
             return jsonify({
                 "erro": (
@@ -56,7 +55,6 @@ def register_meal():
                 )
             }), 409
 
-        # Violação de chave estrangeira
         if error.errno == 1452:
             return jsonify({
                 "erro": (

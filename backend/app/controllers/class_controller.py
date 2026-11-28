@@ -10,7 +10,7 @@ class_bp = Blueprint("classes", __name__)
 service = ClassService()
 
 
-# LISTAR TURMAS
+
 @class_bp.get("/turmas")
 def list_classes():
     school_id = session.get("id_escola")
@@ -32,7 +32,7 @@ def list_classes():
         return jsonify({"erro": "Erro interno ao consultar turmas."}), 500
 
 
-# CADASTRAR TURMA
+
 @class_bp.post("/turmas")
 def create_class():
     school_id = session.get("id_escola")
@@ -58,7 +58,7 @@ def create_class():
         return jsonify({"erro": "Erro interno ao cadastrar turma."}), 500
 
 
-# CONSULTAR TURMA PELO ID
+
 @class_bp.get("/turmas/<int:class_id>")
 def get_class(class_id):
     school_id = session.get("id_escola")
@@ -79,7 +79,7 @@ def get_class(class_id):
         return jsonify({"erro": "Erro interno ao consultar turma."}), 500
 
 
-# ATUALIZAR TURMA
+
 @class_bp.put("/turmas/<int:class_id>")
 def update_class(class_id):
     school_id = session.get("id_escola")
@@ -112,7 +112,7 @@ def update_class(class_id):
         current_app.logger.exception("Erro ao atualizar turma.")
         return jsonify({"erro": "Erro interno ao atualizar turma."}), 500
 
-    # ATIVAR OU DESATIVAR TURMA
+    
 @class_bp.patch("/turmas/<int:class_id>/status")
 def update_class_status(class_id):
     school_id = session.get("id_escola")

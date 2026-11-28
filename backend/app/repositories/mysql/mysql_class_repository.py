@@ -3,7 +3,6 @@ from app.infrastructure.database.connection import get_connection
 
 class MySQLClassRepository:
 
-    # LISTAR TODAS AS TURMAS DA ESCOLA
     def list_by_school(self, school_id):
         connection = get_connection()
 
@@ -32,7 +31,6 @@ class MySQLClassRepository:
         finally:
             connection.close()
 
-    # CADASTRAR UMA NOVA TURMA
     def create(self, school_id, name, age_range, shift, students):
         connection = get_connection()
 
@@ -64,7 +62,6 @@ class MySQLClassRepository:
         finally:
             connection.close()
 
-    # CONSULTAR UMA TURMA PELO ID
     def get_by_id(self, school_id, class_id):
         connection = get_connection()
 
@@ -93,7 +90,6 @@ class MySQLClassRepository:
         finally:
             connection.close()
 
-    # ATUALIZAR OS DADOS DE UMA TURMA
     def update(self, school_id, class_id, name, age_range, shift, students):
         connection = get_connection()
 
@@ -129,7 +125,7 @@ class MySQLClassRepository:
 
         finally:
             connection.close()
- # ATIVAR OU DESATIVAR TURMA
+
     def update_status(self, school_id, class_id, active):
         connection = get_connection()
 
@@ -156,7 +152,6 @@ class MySQLClassRepository:
         finally:
             connection.close()
 
-             # VERIFICAR SE A TURMA POSSUI HISTÓRICO DE PRESENÇA
     def has_attendance_history(self, school_id, class_id):
         connection = get_connection()
 

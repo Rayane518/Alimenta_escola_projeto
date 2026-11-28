@@ -5,7 +5,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 from app.infrastructure.config import load_config
 from app.domain.exceptions.business_error import BusinessError
@@ -16,9 +15,7 @@ class MealDemandModel:
     def __init__(self):
         config = load_config()
 
-        caminho_original = Path(config["MODEL_PATH"])
-
-        pasta_modelos = caminho_original.parent
+        pasta_modelos = Path(config["MODELS_DIR"])
 
         self.model_path = (
             pasta_modelos / "refeicoes" / "modelo_merenda.joblib"
@@ -26,7 +23,7 @@ class MealDemandModel:
 
         self.attendance_model_path = (
             pasta_modelos / "presenca" / "modelo_presenca.joblib"
-        )
+    )
 
     @staticmethod
     def _prepare(history):
@@ -77,7 +74,7 @@ class MealDemandModel:
 
         df = df.sort_values("data")
 
-         # Verificar a quantidade de datas diferentes
+        
         datas = sorted(df["data"].unique())
 
         if len(datas) < 5:
@@ -112,8 +109,7 @@ class MealDemandModel:
             )
         ])
 
-        # Separar as datas em ordem cronológica
-        datas = sorted(df["data"].unique())
+       
         ponto_corte = int(len(datas) * 0.8)
 
         datas_treino = datas[:ponto_corte]
@@ -128,26 +124,24 @@ class MealDemandModel:
         X_test = self._attendance_features(teste)
         y_test = teste["alunos_presentes"].astype(float)
 
-        # Treinar somente com os dados antigos
+       
         model.fit(X_train, y_train)
 
-        # Gerar previsões para os dados de teste
+       
         previsoes = model.predict(X_test)
 
-        # Calcular o erro médio absoluto
+       
         mae = mean_absolute_error(y_test, previsoes)
 
-        # Treinar novamente com todo o histórico
-        # para utilizar o modelo em previsões futuras
         model.fit(X, y)
 
-        # Criar a pasta, caso não exista
+       
         self.attendance_model_path.parent.mkdir(
             parents=True,
             exist_ok=True
         )
 
-        # Salvar o modelo treinado
+       
         joblib.dump(
             model,
             self.attendance_model_path
@@ -165,35 +159,35 @@ class MealDemandModel:
     def predict_attendance(
         self, target_date, shift, expected_students
     ):
-        # Verificar se o modelo já foi treinado
+       
         if not self.attendance_model_path.exists():
             raise BusinessError(
                 "O modelo de presença ainda não foi treinado."
             )
 
-        # Validar a quantidade de alunos
+       
         if expected_students < 0:
             raise BusinessError(
                 "A quantidade de alunos não pode ser negativa."
             )
 
-        # Carregar o modelo treinado
+       
         model = joblib.load(self.attendance_model_path)
 
-        # Identificar o dia da semana
+       
         day = pd.Timestamp(target_date).dayofweek
 
-        # Preparar as informações para previsão
+       
         dados = pd.DataFrame([{
             "alunos_previstos": expected_students,
             "dia_semana": day,
             "turno": shift
         }])
 
-        # Gerar a previsão
+      
         prediction = model.predict(dados)[0]
 
-        # Arredondar e limitar ao número de alunos previstos
+    
         estimated_students = max(
             0,
             min(expected_students, round(float(prediction)))
@@ -213,10 +207,9 @@ class MealDemandModel:
                 "o modelo de refeições."
             )
 
-        # Organizar os registros por data
+        
         df = df.sort_values("data")
 
-        # Separar as datas cronologicamente
         datas = sorted(df["data"].unique())
 
 
@@ -241,7 +234,7 @@ class MealDemandModel:
         X_test = self._features(teste)
         y_test = teste["refeicoes_servidas"].astype(float)
 
-        # Preparar as informações categóricas
+    
         preprocess = ColumnTransformer(
             [
                 (
@@ -265,7 +258,7 @@ class MealDemandModel:
             )
         ])
 
-        # Treinar com os registros mais antigos
+       
         model.fit(X_train, y_train)
 
         # Avaliar com os registros mais recentes
@@ -273,13 +266,11 @@ class MealDemandModel:
 
         mae = mean_absolute_error(y_test, previsoes)
 
-        # Treinar novamente com todo o histórico
         X = self._features(df)
         y = df["refeicoes_servidas"].astype(float)
 
         model.fit(X, y)
 
-        # Salvar o modelo de refeições
         self.model_path.parent.mkdir(
             parents=True,
             exist_ok=True
@@ -303,20 +294,19 @@ class MealDemandModel:
                 "Não há registros históricos válidos para previsão."
             )
 
-        # Verificar se o modelo foi treinado
         if not self.model_path.exists():
             raise BusinessError(
                 "O modelo de refeições ainda não foi treinado. "
                 "Execute o treinamento antes de solicitar previsões."
             )
 
-        # Carregar o modelo treinado
+        
         model = joblib.load(self.model_path)
 
-        # Identificar o dia da semana
+       
         day = pd.Timestamp(target_date).dayofweek
 
-        # Preparar os dados para previsão
+       
         row = pd.DataFrame([{
             "alunos_presentes": students,
             "dia_semana": day,
@@ -324,7 +314,6 @@ class MealDemandModel:
             "cardapio": menu or "não informado"
         }])
 
-        # Gerar previsão e limitar ao número de alunos
         estimate = max(
             0,
             min(

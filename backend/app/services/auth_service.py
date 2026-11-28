@@ -16,9 +16,6 @@ class AuthService:
     def __init__(self, repository=None):
         self.repository = repository or MySQLAuthRepository()
 
-    # ==========================================
-    # VALIDAÇÃO DE SENHA
-    # ==========================================
     @staticmethod
     def validar_nova_senha(senha):
 
@@ -59,9 +56,6 @@ class AuthService:
 
         return True
 
-    # ==========================================
-    # LOGIN DO GESTOR
-    # ==========================================
     def login(self, email, senha):
 
         if not isinstance(email, str) or not isinstance(senha, str):
@@ -98,9 +92,6 @@ class AuthService:
             "email": usuario["email"]
         }
 
-    # ==========================================
-    # CADASTRO DO GESTOR
-    # ==========================================
     def cadastrar_gestor(
         self,
         school_id,
@@ -111,7 +102,6 @@ class AuthService:
         confirmar_senha
     ):
 
-        # Validar escola
         if (
             not isinstance(school_id, int)
             or isinstance(school_id, bool)
@@ -121,7 +111,6 @@ class AuthService:
                 "Escola inválida."
             )
 
-        # Validar nome
         if not isinstance(nome, str) or not nome.strip():
             raise BusinessError(
                 "Informe o nome do gestor."
@@ -134,7 +123,6 @@ class AuthService:
                 "O nome deve ter no máximo 150 caracteres."
             )
 
-        # Validar e-mail
         if not isinstance(email, str) or not email.strip():
             raise BusinessError(
                 "Informe o e-mail do gestor."
@@ -155,7 +143,6 @@ class AuthService:
                 "Informe um e-mail válido."
             )
 
-        # Validar CPF
         if not validar_cpf(cpf):
             raise BusinessError(
                 "CPF inválido."
@@ -163,37 +150,33 @@ class AuthService:
 
         cpf_limpo = cpf.replace(".", "").replace("-", "")
 
-        # Validar senha
         self.validar_nova_senha(senha)
 
-        # Confirmar senha
         if senha != confirmar_senha:
             raise BusinessError(
                 "As senhas não coincidem."
             )
 
-        # Verificar e-mail duplicado
         if self.repository.find_by_email(email):
             raise BusinessError(
                 "Este e-mail já está cadastrado."
             )
 
-        # Verificar CPF duplicado
+    
         if self.repository.find_by_cpf(cpf_limpo):
             raise BusinessError(
                 "Este CPF já está cadastrado."
             )
 
-        # Verificar gestor existente
         if self.repository.find_by_school(school_id):
             raise BusinessError(
                 "Esta escola já possui um gestor cadastrado."
             )
 
-        # Gerar hash da senha
+
         senha_hash = generate_password_hash(senha)
 
-        # Salvar gestor no banco
+       
         try:
             usuario_id = self.repository.create(
                 school_id=school_id,

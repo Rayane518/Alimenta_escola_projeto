@@ -1,4 +1,5 @@
-﻿# Ambiente virtual
+﻿rquivo completo ficará assim:
+# Ambiente virtual
 .venv/
 venv/
 env/
@@ -22,3 +23,8 @@ Thumbs.db
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
